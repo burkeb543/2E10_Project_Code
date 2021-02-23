@@ -1,0 +1,263 @@
+
+const int LEYE = 9;
+const int REYE = 10;
+
+const int MOTOR_PIN_3 = 3;
+const int MOTOR_PIN_2 = 2;
+const int MOTOR_PIN_5 = 5;
+const int MOTOR_PIN_6 = 6;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode( MOTOR_PIN_3, OUTPUT );
+  pinMode( MOTOR_PIN_2, OUTPUT );
+  pinMode( MOTOR_PIN_5, OUTPUT );
+  pinMode( MOTOR_PIN_6, OUTPUT );
+  pinMode( LEYE, INPUT );
+  pinMode( REYE, INPUT );
+  pinMode( MOTOR_PIN_3, HIGH);
+  pinMode( MOTOR_PIN_2, HIGH);
+  pinMode( MOTOR_PIN_5, HIGH);
+  pinMode( MOTOR_PIN_6, HIGH);
+}
+    int LEYE_2 = digitalRead( LEYE );
+    int REYE_2 = digitalRead( REYE );
+
+void loop() {
+  Lab_4_Part_1();
+  Lab_4_Part_2();
+  Lab_4_Part_3();
+}
+
+
+void Lab_4_Part_1() {
+  Left_Wheel_Forward();
+  delay(2000);
+  Left_Wheel_Still();
+  delay(1000);
+  Right_Wheel_Forward();
+  delay(2000);
+  Right_Wheel_Still();
+  delay(1000);
+
+  Left_Wheel_Backward();
+  delay(2000);
+  Left_Wheel_Still();
+  delay(1000);
+  Right_Wheel_Backward();
+  delay(2000);
+  Right_Wheel_Still();
+  delay(1000);
+
+  Left_Backward_Right_Forward();
+  delay(2000);
+
+  Right_Left_Wheel_Still();
+  delay(1000);
+
+  Left_Forward_Right_Backward();
+  delay(2000);
+
+  Right_Left_Wheel_Still();
+  delay(1000);
+}
+
+void Lab_4_Part_2() {
+  Left_Wheel_Forward_Three_Quarter_Speed();
+  delay(2000);
+  Left_Wheel_Still();
+  delay(1000);
+
+  Right_Wheel_Forward_Three_Quarter_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  delay(1000);
+
+  Left_Wheel_Forward_Half_Speed();
+  delay(2000);
+  Left_Wheel_Still();
+  delay(1000);
+
+  Right_Wheel_Forward_Half_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  delay(1000);
+
+  Left_Wheel_Backward_Three_Quarter_Speed();
+  delay(2000);
+  Left_Wheel_Still();
+  delay(1000);
+
+  Right_Wheel_Backward_Three_Quarter_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  delay(1000);
+
+  Left_Wheel_Backward_Half_Speed();
+  delay(2000);
+  Left_Wheel_Still();
+  delay(1000);
+
+  Right_Wheel_Backward_Half_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  delay(1000);
+}
+
+void Lab_4_Part_3() {
+  Soft_Turn_Left();
+  delay(1000);
+  Soft_Turn_Right();
+  delay(1000);
+  Hard_Turn_Left();
+  delay(1000);
+  Hard_Turn_Right();
+  delay(1000);
+  Hard_Turn_Left_Backward();
+  delay(1000);
+  Hard_Turn_Right_Backward();
+  delay(1000);
+}
+
+void Right_Wheel_Forward() {
+  pinMode( MOTOR_PIN_5, LOW);
+  pinMode( MOTOR_PIN_6, HIGH);
+}
+
+void Right_Wheel_Forward_Three_Quarter_Speed() {
+  pinMode( MOTOR_PIN_5, LOW);
+  analogWrite(MOTOR_PIN_6, 63);
+}
+
+void Right_Wheel_Forward_Half_Speed() {
+  pinMode( MOTOR_PIN_5, LOW);
+  analogWrite(MOTOR_PIN_6, 127);
+}
+
+void Right_Wheel_Still() {
+  pinMode( MOTOR_PIN_5, HIGH);
+  pinMode( MOTOR_PIN_6, HIGH);
+}
+
+void Right_Wheel_Backward() {
+  pinMode( MOTOR_PIN_5, HIGH);
+  pinMode( MOTOR_PIN_6, LOW);
+}
+
+void Right_Wheel_Backward_Three_Quarter_Speed() {
+  pinMode( MOTOR_PIN_5, HIGH);
+  analogWrite(MOTOR_PIN_6, 191);
+}
+
+void Right_Wheel_Backward_Half_Speed() {
+  pinMode( MOTOR_PIN_5, HIGH);
+  analogWrite(MOTOR_PIN_6, 127);
+}
+
+void Left_Wheel_Forward() {
+  pinMode( MOTOR_PIN_3, HIGH);
+  pinMode( MOTOR_PIN_2, LOW);
+}
+
+void Left_Wheel_Forward_Three_Quarter_Speed() {
+  pinMode( MOTOR_PIN_2, LOW);
+  analogWrite(MOTOR_PIN_3, 63);
+}
+
+void Left_Wheel_Forward_Half_Speed() {
+  pinMode( MOTOR_PIN_2, LOW);
+  analogWrite(MOTOR_PIN_3, 127);
+}
+
+void Left_Wheel_Still() {
+  pinMode( MOTOR_PIN_3, HIGH);
+  pinMode( MOTOR_PIN_2, HIGH);
+}
+
+void Left_Wheel_Backward() {
+  pinMode( MOTOR_PIN_3, LOW);
+  pinMode( MOTOR_PIN_2, HIGH);
+}
+
+void Left_Wheel_Backward_Three_Quarter_Speed() {
+  pinMode( MOTOR_PIN_3, LOW);
+  analogWrite(MOTOR_PIN_2, 63);
+}
+
+void Left_Wheel_Backward_Half_Speed() {
+  pinMode( MOTOR_PIN_3, LOW);
+  analogWrite(MOTOR_PIN_2, 127);
+}
+
+void Right_Left_Wheel_Still() {
+  Right_Wheel_Still();
+  Left_Wheel_Still();
+}
+
+void Left_Right_Forward() {
+  Left_Wheel_Forward();
+  Right_Wheel_Forward();
+}
+
+void Left_Right_Backward() {
+  Left_Wheel_Backward();
+  Right_Wheel_Backward();
+}
+
+void Left_Backward_Right_Forward() {
+  Left_Wheel_Backward();
+  Right_Wheel_Forward();
+}
+
+void Left_Forward_Right_Backward() {
+  Left_Wheel_Forward();
+  Right_Wheel_Backward();
+}
+
+void Soft_Turn_Left(){
+  Right_Wheel_Forward_Three_Quarter_Speed();
+  Left_Wheel_Forward_Half_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  Left_Wheel_Still();
+}
+
+void Hard_Turn_Left(){
+  Right_Wheel_Forward();
+  Left_Wheel_Forward_Half_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  Left_Wheel_Still();
+}
+
+void Hard_Turn_Left_Backward(){
+  Right_Wheel_Backward();
+  Left_Wheel_Backward_Half_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  Left_Wheel_Still();
+}
+
+void Soft_Turn_Right(){
+  Left_Wheel_Forward_Three_Quarter_Speed();
+  Right_Wheel_Forward_Half_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  Left_Wheel_Still();
+}
+
+void Hard_Turn_Right(){
+  Left_Wheel_Forward();
+  Right_Wheel_Forward_Half_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  Left_Wheel_Still();
+}
+
+void Hard_Turn_Right_Backward(){
+  Left_Wheel_Backward();
+  Right_Wheel_Backward_Half_Speed();
+  delay(2000);
+  Right_Wheel_Still();
+  Left_Wheel_Still();
+}
