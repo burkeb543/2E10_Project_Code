@@ -1,4 +1,3 @@
-
 #define LEYE 9      // left sensor
 #define REYE 10      // right sensor
 
@@ -8,7 +7,7 @@
 #define RMF 5       // right motor
 #define RMR 6       // right motor
 
-// right motor
+
 
 void setup()
 {
