@@ -1,0 +1,56 @@
+
+#define LEYE 9      // left sensor
+#define REYE 10      // right sensor
+
+
+#define LMF 3       // left motor
+#define LMR 2       // left motor
+#define RMF 5       // right motor
+#define RMR 6       // right motor
+
+// right motor
+
+void setup()
+{
+  pinMode(LEYE, INPUT);
+  pinMode(REYE, INPUT);
+  pinMode(LMF, OUTPUT);
+  pinMode(LMR, OUTPUT);
+  pinMode(RMF, OUTPUT);
+  pinMode(RMR, OUTPUT);
+}
+
+void loop()
+{
+  if(!(digitalRead(LEYE)) && !(digitalRead(REYE)))     // Move Forward
+  {
+    digitalWrite(LMF, HIGH);
+    digitalWrite(LMR, LOW);
+    digitalWrite(RMF, HIGH);
+    digitalWrite(RMR, LOW);
+  }
+  
+  if(!(digitalRead(REYE)) && digitalRead(LEYE))     // Turn right
+  {
+    digitalWrite(LMF, HIGH);
+    digitalWrite(LMR, LOW);
+    digitalWrite(RMF, LOW);
+    digitalWrite(RMR, HIGH);
+  }
+  
+  if(digitalRead(REYE) && !(digitalRead(LEYE)))     // turn left
+  {
+    digitalWrite(LMF, HIGH);
+    digitalWrite(LMR, LOW);
+    digitalWrite(RMF, HIGH);
+    digitalWrite(RMR, LOW);
+  }
+  
+  if(digitalRead(LEYE) && digitalRead(REYE))     // stop
+  {
+    digitalWrite(LMF, HIGH);
+    digitalWrite(LMR, HIGH);
+    digitalWrite(RMF, LOW);
+    digitalWrite(RMR, LOW);
+  }
+}
