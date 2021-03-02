@@ -1,0 +1,71 @@
+import controlP5.*;
+import processing.net.*;
+ControlP5 cp5;
+Client myClient;
+String data;
+void setup() {
+size(800,700);
+cp5 = new ControlP5(this);
+myClient =new Client(this,"",80);//Add IP
+cp5.addButton("Forward")
+.setValue(0)
+.setPosition(250,100)
+.setSize(300,30);
+
+cp5.addButton("Backward")
+.setValue(0)
+.setPosition(250,200)
+.setSize(300,30);
+
+cp5.addButton("Right")
+.setValue(0)
+.setPosition(250,400)
+.setSize(300,30);
+
+cp5.addButton("Left")
+.setValue(0)
+.setPosition(250,500)
+.setSize(300,30);
+
+cp5.addButton("Still")
+.setValue(0)
+.setPosition(250,300)
+.setSize(300,30);
+}
+void draw() {
+}
+
+public void Forward() {
+if (myClient.active()){
+myClient.write("f");
+println("Button Pressed");
+}
+}
+
+public void Backward() {
+if (myClient.active()){
+myClient.write("b");
+println("Button Pressed");
+}
+}
+
+public void Right() {
+if (myClient.active()){
+myClient.write("r");
+println("Button Pressed");
+}
+}
+
+public void Left() {
+if (myClient.active()){
+myClient.write("l");
+println("Button Pressed");
+}
+}
+
+public void Still() {
+if (myClient.active()){
+myClient.write("s");
+println("Button Pressed");
+}
+}
