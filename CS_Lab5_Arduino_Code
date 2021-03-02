@@ -1,0 +1,122 @@
+#include <WiFiNINA.h>
+char ssid[] = ""; // Add WiFi Name
+char pass[] = "";  //Add WiFi password
+
+const int REYE = 10;
+const int LEYE = 9;
+
+const int LM1 = 2;
+const int LM2 = 3;
+const int RM1 = 5;
+const int RM2 = 6;
+
+const int echoPin = 15;
+const int trigPin = 14;
+
+WiFiServer server(80);
+
+void setup() {
+Serial.begin(9600);
+pinMode( LM2, OUTPUT );
+pinMode( LM1, OUTPUT );
+pinMode( RM1, OUTPUT );
+pinMode( RM2, OUTPUT );
+pinMode( LEYE, INPUT );
+pinMode( REYE, INPUT );
+pinMode( LM2, LOW);
+pinMode( LM1, LOW);
+pinMode( RM1, LOW);
+pinMode( RM2, LOW);
+
+pinMode(trigPin, OUTPUT); // trigPin OUTPUT
+pinMode(echoPin, INPUT); // echoPin  INPUT
+WiFi.begin(ssid, pass);
+IPAddress ip = WiFi.localIP();
+Serial.print("IP Address:");
+Serial.println(ip);
+server.begin();
+}
+
+void loop() {
+
+WiFiClient client = server.available();
+  if (client.connected()) {
+    Serial.println("Client Connected");
+    char c = client.read();
+    if (c == 'f'){
+      Serial.println("Forward");
+      Forward();
+    }
+    if (c == 'b'){
+      Serial.println("Backward");
+      Backward();
+    }
+    if (c == 'r'){
+      Serial.println("Drive Right");
+      driveR();
+    }
+    if (c == 'l'){
+      Serial.println("Drive Left");
+      driveL();
+    }
+    if (c == 's'){
+      Serial.println("Still");
+      S();
+    }
+  }
+}
+
+void Forward() {
+  RMF();
+  LMF();
+}
+
+void Backward() {
+  RMB();
+  LMB();
+}
+
+void driveL() {
+  RMF();
+  LMS();
+}
+
+void driveR() {
+  RMS();
+  LMF();
+}
+
+void S() {
+  RMS();
+  LMS();
+}
+
+void RMF() {
+  pinMode( RM1, LOW);
+  pinMode( RM2, HIGH);
+}
+
+void RMS() {
+  pinMode( RM1, HIGH);
+  pinMode( RM2, HIGH);
+}
+
+void RMB() {
+  pinMode( RM1, HIGH);
+  pinMode( RM2, LOW);
+}
+
+void LMF() {
+  pinMode( LM2, HIGH);
+  pinMode( LM1, LOW);
+}
+
+void LMS() {
+  pinMode( LM2, HIGH);
+  pinMode( LM1, HIGH);
+}
+
+void LMB() {
+  pinMode( LM2, LOW);
+  pinMode( LM1, HIGH);
+}
