@@ -81,7 +81,6 @@ void Drive() {
   
   duration = pulseIn(echoPin, HIGH);
   distance = (duration-10) * 0.034 / 2;
-  Serial.println(distance);
 
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -89,8 +88,8 @@ void Drive() {
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  LEYE_2 = digitalRead( LEYE ); //Check status of Left Eye
-  REYE_2 = digitalRead( REYE ); //Check status of Right Eye
+  LEYE_2 = digitalRead( LEYE ); //Store current status of Left Eye
+  REYE_2 = digitalRead( REYE ); //Store current status of Right Eye
 
   if (distance > 10) { //Proceed if no object within 10cm
     if( !LEYE_2 ){ //Check if Left eye detects white
@@ -108,6 +107,7 @@ void Drive() {
   else{ //If an object obstructs the way stop
     RMS();
     LMS();
+    Serial.println(" An obstacle is detected");
   }
 }
 
