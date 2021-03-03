@@ -1,0 +1,138 @@
+#include <WiFiNINA.h>
+char ssid[] = ""; // Add WiFi Name
+char pass[] = "";  //Add WiFi password
+
+const int REYE = 10;
+const int LEYE = 9;
+
+const int LM1 = 2;
+const int LM2 = 3;
+const int RM1 = 5;
+const int RM2 = 6;
+
+const int echoPin = 15;
+const int trigPin = 14;
+
+
+long duration; 
+int distance;
+
+WiFiServer server(80);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode( LM2, OUTPUT );
+  pinMode( LM1, OUTPUT );
+  pinMode( RM1, OUTPUT );
+  pinMode( RM2, OUTPUT );
+  pinMode( LEYE, INPUT );
+  pinMode( REYE, INPUT );
+  pinMode( LM2, HIGH);
+  pinMode( LM1, HIGH);
+  pinMode( RM1, HIGH);
+  pinMode( RM2, HIGH);
+  
+  pinMode(trigPin, OUTPUT); // trigPin OUTPUT
+  pinMode(echoPin, INPUT); // echoPin  INPUT
+  WiFi.begin(ssid, pass);
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address:");
+  Serial.println(ip);
+  server.begin();
+}
+
+bool keepDriving = false;
+
+void loop() {
+  WiFiClient client = server.available();
+  if (client.connected()) {
+    char c = client.read();
+    if (c == 'z'){
+      int y = 50;
+      while( y > 0)
+      {
+        Drive();
+        y--;
+      }
+      keepDriving = true;
+    }
+    if (c == 's'){
+      S();
+      keepDriving = false;
+    }
+  }
+  else{
+    if (keepDriving)
+    {
+      int x = 50;
+      while( x > 0)
+      {
+        Drive();
+        x--;
+      }
+    }
+  }
+}
+
+int LEYE_2 = digitalRead( LEYE );
+int REYE_2 = digitalRead( REYE );
+
+void Drive() {
+  
+  duration = pulseIn(echoPin, HIGH);
+  distance = (duration-10) * 0.034 / 2;
+  Serial.println(distance);
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  LEYE_2 = digitalRead( LEYE ); //Check status of Left Eye
+  REYE_2 = digitalRead( REYE ); //Check status of Right Eye
+
+  if (distance > 10) { //Proceed if no object within 10cm
+    if( !LEYE_2 ){ //Check if Left eye detects white
+      LMF();
+       }else{
+        LMS();
+      }
+  
+      if( !REYE_2 ){ //Check if Right eye detects white
+      RMF();
+       }else{
+      RMS();
+    }
+  }
+  else{ //If an object obstructs the way stop
+    RMS();
+    LMS();
+  }
+}
+
+
+void S() { //Stop Buggy
+  RMS();
+  LMS();
+}
+
+void RMF() { //Right Motor Forward
+  pinMode( RM1, LOW);
+  pinMode( RM2, HIGH);
+}
+
+void RMS() { //Right Motor Stop
+  pinMode( RM1, HIGH);
+  pinMode( RM2, HIGH);
+}
+
+void LMF() { //Left Motor Forward
+  pinMode( LM2, HIGH);
+  pinMode( LM1, LOW);
+}
+
+void LMS() { //Left Motor Stop
+  pinMode( LM2, HIGH);
+  pinMode( LM1, HIGH);
+}
