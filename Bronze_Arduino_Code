@@ -1,136 +1,132 @@
 #include <WiFiNINA.h>
 char ssid[] = ""; // Add WiFi Name
-char pass[] = "";  //Add WiFi password
+char pass[] = "";  // Add WiFi password
 
-const int REYE = 10;
-const int LEYE = 9;
+const int REYE = 10; // Right IR Sensor digital pin 
+const int LEYE = 9;  // Left IR Sensor digital pin
 
-const int LM1 = 2;
-const int LM2 = 3;
-const int RM1 = 5;
-const int RM2 = 6;
+const int LM1 = 2; // Left Motor Logic Pin 1
+const int LM2 = 3; // Left Motor Logic Pin 2
+const int RM1 = 5; // Right Motor Logic Pin 1
+const int RM2 = 6; // Right Motor Logic Pin 2
 
-const int echoPin = 15;
-const int trigPin = 14;
+const int echoPin = 15; // Echo Pin for Ultrasonic
+const int trigPin = 14; // Trig Pin for Ultrasonic
 
+int LEYE_Status = digitalRead( LEYE ); // Current status of Left IR Sensor
+int REYE_Status = digitalRead( REYE ); // Current status of Right IR Sensor
 
-long duration; 
-int distance;
+long duration; // Length of time for ultrasonic ping to return
+int distance; // Distance from buggy to obstacle
 
-WiFiServer server(80);
+bool keepDriving = false; // True if buggy receives instruction to start
+
+WiFiServer server(80); // Creating Server object
 
 void setup() {
   Serial.begin(9600);
-  pinMode( LM2, OUTPUT );
-  pinMode( LM1, OUTPUT );
-  pinMode( RM1, OUTPUT );
-  pinMode( RM2, OUTPUT );
-  pinMode( LEYE, INPUT );
-  pinMode( REYE, INPUT );
-  pinMode( LM2, HIGH);
-  pinMode( LM1, HIGH);
-  pinMode( RM1, HIGH);
-  pinMode( RM2, HIGH);
+  pinMode( LM2, OUTPUT ); // Set Left Motor Logic pin 2 as output
+  pinMode( LM1, OUTPUT ); // Set Left Motor Logic pin 1 as output
+  pinMode( RM1, OUTPUT ); // Set Right Motor Logic pin 1 as output
+  pinMode( RM2, OUTPUT ); // Set Right Motor Logic pin 2 as output
+  pinMode( LEYE, INPUT ); // Set Left IR Sensor as input
+  pinMode( REYE, INPUT ); // Set Right IR Sensor as input
+  pinMode( LM2, LOW); // Set Left Motor Logic pin 2 to low
+  pinMode( LM1, LOW); // Set Left Motor Logic pin 1 to low
+  pinMode( RM1, LOW); // Set Right Motor Logic pin 1 to low
+  pinMode( RM2, LOW); // Set Right Motor Logic pin 2 to low
   
   pinMode(trigPin, OUTPUT); // trigPin OUTPUT
   pinMode(echoPin, INPUT); // echoPin  INPUT
-  WiFi.begin(ssid, pass);
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address:");
+  WiFi.begin(ssid, pass); // Initialize the WiFi library's network settings
+  IPAddress ip = WiFi.localIP(); // IP Address of arduino
+  Serial.print("IP Address:"); 
   Serial.println(ip);
-  server.begin();
+  server.begin(); // Tells server to listen for incoming connections
 }
-
-bool keepDriving = false;
 
 void loop() {
-  WiFiClient client = server.available();
+  WiFiClient client = server.available(); // Waiting for a client to connect
   if (client.connected()) {
     char c = client.read();
-    if (c == 'z'){
-      callDrive();
-      keepDriving = true;
+    if (c == 'z'){ // If start signal received from client
+      callDrive(); 
+      keepDriving = true; // Buggy has been started
     }
-    if (c == 's'){
+    if (c == 's'){ // If Stop signal received from client
       S();
-      keepDriving = false;
+      keepDriving = false; // Buggy has been stopped
     }
   }
-  else{
-    if (keepDriving){
-      callDrive();
+  else{  // If client briefly disconnects
+    if (keepDriving){  // Keep driving if previously driving
+      callDrive(); 
     }
   }
 }
 
-int LEYE_2 = digitalRead( LEYE );
-int REYE_2 = digitalRead( REYE );
-
-void Drive() {
+void Drive() { // Dictates motion of buggy
   
   duration = pulseIn(echoPin, HIGH);
   distance = (duration-10) * 0.034 / 2;
 
-  digitalWrite(trigPin, LOW);
+  // Check distance to potential obstacles
+  digitalWrite(trigPin, LOW); 
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  LEYE_2 = digitalRead( LEYE ); //Store current status of Left Eye
-  REYE_2 = digitalRead( REYE ); //Store current status of Right Eye
+  LEYE_Status = digitalRead( LEYE ); // Store current status of Left Eye
+  REYE_Status = digitalRead( REYE ); // Store current status of Right Eye
 
-  if (distance > 10) { //Proceed if no object within 10cm
-    if( !LEYE_2 ){ //Check if Left eye detects white
+  if (distance > 10) { // Proceed if no object within 10cm in front of buggy
+    if( !LEYE_Status ){ // Check if Left IR sensor detects white
       LMF();
-       }else{
+       }else{ // If black detected stop the Left Motor
         LMS();
       }
   
-      if( !REYE_2 ){ //Check if Right eye detects white
+      if( !REYE_Status ){ //Check if Right IR sensor detects white
       RMF();
-       }else{
+       }else{ // If black detected stop the Rigth Motor
       RMS();
     }
   }
-  else{ //If an object obstructs the way stop
-    RMS();
-    LMS();
+  else{ // If an object obstructs the way stop the buggy
+    S();
     Serial.println(" An obstacle is detected");
   }
 }
 
 
-void S() { //Stop Buggy
+void S() { // Stop Buggy
   RMS();
   LMS();
 }
 
-void RMF() { //Right Motor Forward
+void RMF() { // Right Motor Forward
   pinMode( RM1, LOW);
   pinMode( RM2, HIGH);
 }
 
-void RMS() { //Right Motor Stop
-  pinMode( RM1, HIGH);
-  pinMode( RM2, HIGH);
+void RMS() { // Right Motor Stop
+  pinMode( RM1, LOW);
+  pinMode( RM2, LOW);
 }
 
-void LMF() { //Left Motor Forward
+void LMF() { // Left Motor Forward
   pinMode( LM2, HIGH);
   pinMode( LM1, LOW);
 }
 
-void LMS() { //Left Motor Stop
-  pinMode( LM2, HIGH);
-  pinMode( LM1, HIGH);
+void LMS() { // Left Motor Stop
+  pinMode( LM2, LOW);
+  pinMode( LM1, LOW);
 }
 
-void callDrive(){
-  int x = 50;
-  while( x > 0)
-  {
+void callDrive(){ // Calls Drive() multiple times to ensure fast response 
+  for(int n = 0; n < 50; n++){
     Drive();
-    x--;
   }
 }
