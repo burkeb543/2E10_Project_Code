@@ -48,12 +48,7 @@ void loop() {
   if (client.connected()) {
     char c = client.read();
     if (c == 'z'){
-      int y = 50;
-      while( y > 0)
-      {
-        Drive();
-        y--;
-      }
+      callDrive();
       keepDriving = true;
     }
     if (c == 's'){
@@ -62,14 +57,8 @@ void loop() {
     }
   }
   else{
-    if (keepDriving)
-    {
-      int x = 50;
-      while( x > 0)
-      {
-        Drive();
-        x--;
-      }
+    if (keepDriving){
+      callDrive();
     }
   }
 }
@@ -135,4 +124,13 @@ void LMF() { //Left Motor Forward
 void LMS() { //Left Motor Stop
   pinMode( LM2, HIGH);
   pinMode( LM1, HIGH);
+}
+
+void callDrive(){
+  int x = 50;
+  while( x > 0)
+  {
+    Drive();
+    x--;
+  }
 }
