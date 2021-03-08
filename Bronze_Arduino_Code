@@ -20,6 +20,7 @@ long duration; // Length of time for ultrasonic ping to return
 int distance; // Distance from buggy to obstacle
 
 bool keepDriving = false; // True if buggy receives instruction to start
+bool obstacleInFront; // True if obstacle within 10cm detected
 
 WiFiServer server(80); // Creating Server object
 
@@ -35,9 +36,9 @@ void setup() {
   pinMode( LM1, LOW); // Set Left Motor Logic pin 1 to low
   pinMode( RM1, LOW); // Set Right Motor Logic pin 1 to low
   pinMode( RM2, LOW); // Set Right Motor Logic pin 2 to low
-  
   pinMode(trigPin, OUTPUT); // trigPin OUTPUT
   pinMode(echoPin, INPUT); // echoPin  INPUT
+  obstacleInFront = false; // No obstacle in front
   WiFi.begin(ssid, pass); // Initialize the WiFi library's network settings
   IPAddress ip = WiFi.localIP(); // IP Address of arduino
   Serial.print("IP Address:"); 
@@ -92,10 +93,19 @@ void Drive() { // Dictates motion of buggy
        }else{ // If black detected stop the Rigth Motor
       RMS();
     }
+
+    if (obstacleInFront) {
+      Serial.println(" Obstacle has been cleared");
+      Serial.println("");
+      obstacleInFront = false; // Set to false as obstacle no longer in front of buggy
+    }
   }
   else{ // If an object obstructs the way stop the buggy
     S();
-    Serial.println(" An obstacle is detected");
+    if (!obstacleInFront){ // Check if obstacle was in front during previous code loop
+      Serial.println(" An obstacle is detected"); // Print if this is a new obstacle
+      obstacleInFront = true; // As obstacle in front of buggy set to true
+    }
   }
 }
 
