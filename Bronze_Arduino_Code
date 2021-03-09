@@ -64,6 +64,9 @@ void loop() {
       callDrive(); 
     }
   }
+  if(obstacleInFront){ 
+    server.write('o'); // Send the char 'o' to the Processor PC to signal an obstacle in front of the buggy
+  }
 }
 
 void Drive() { // Dictates motion of buggy
