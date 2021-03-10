@@ -120,7 +120,7 @@ void S() { // Stop Buggy
 
 void RMF() { // Right Motor Forward
   pinMode( RM1, LOW);
-  pinMode( RM2, HIGH);
+  analogWrite( RM2, 85);
 }
 
 void RMS() { // Right Motor Stop
@@ -129,7 +129,7 @@ void RMS() { // Right Motor Stop
 }
 
 void LMF() { // Left Motor Forward
-  pinMode( LM2, HIGH);
+  analogWrite( LM2, 85);
   pinMode( LM1, LOW);
 }
 
