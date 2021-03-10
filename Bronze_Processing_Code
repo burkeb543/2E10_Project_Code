@@ -1,96 +1,86 @@
 import controlP5.*;
 import processing.net.*;
-ControlP5 cp5;
-Client myClient;
-String data;
-void setup() {
-size(800,700);
-cp5 = new ControlP5(this);
-myClient =new Client(this,"192.168.1.3",80);
 
-cp5.addButton("Start")
+ControlP5 cp5; // Creation of controlP5 Obstacle
+Client myClient; // Creation of Client Obstacle
+
+void setup() {
+size(800,700); // Set screen width to 800 and height to 700
+cp5 = new ControlP5(this); // Initialise controlP5 Obstacle
+myClient =new Client(this,"192.168.1.3",80); // Initialise Client Obstacle using Arduino IP Address
+
+cp5.addButton("Start") // Add Start Button to screen
 .setValue(0)
 .setPosition(250,200)
-.setSize(300,30);
+.setSize(300,30); // Set size of button as width = 300 and height = 30
 
-cp5.addButton("Stop")
+cp5.addButton("Stop") // Add Stop Button to screen
 .setValue(0)
 .setPosition(250,500)
 .setSize(300,30);
 
-rectMode(CENTER);
-textAlign(CENTER, CENTER);
+rectMode(CENTER); //  Interpret the first two parameters of rect() as the shape's center point, while the third and fourth parameters are its width and height.
+textAlign(CENTER, CENTER); //  Horizontal and vertical alignment respectively
 }
 
-int timeDiff;
-int timerStarted = 0;
-int startTime;
-int clear = 0;
-int timeWhenObject;
-int sinceObject;
-int start = 0;
+
+int timeWhenObstacle;
+int timeSinceObstacle ;
 
 void draw() {
   char dataIn = 'a';
-  timeDiff = millis() - startTime;
-  if(myClient.available() > 0){
+ 
+  if(myClient.available() > 0){ // If any bytes are available from the server return the number of bytes
     dataIn = myClient.readChar();
-    timeWhenObject = millis();
   }
    
-  if (dataIn == 'o' && clear == 0){
-    if(timerStarted == 0){
-      timerStarted = 1;
-      startTime = millis();
-    }
+  if (dataIn == 'o'){ // Proceed if an Obstacle has been detected
+    timeWhenObstacle = millis(); // Store the time instant whe  an Obstacle was detected
+  }
+  timeSinceObstacle = millis() - timeWhenObstacle; // Calculate time since Obstacle detected
+  
+  if (timeSinceObstacle < 3000){ // Print Obstacle detected if an Obstacle has been detected
     fill(255);
     rect(400,380,200,20);
     fill(0);
     text("OBSTACLE DETECTED",400,380);
   }
-  timeDiff = millis() - startTime;
-  if (timeDiff > 3000){
+  else{ // Remove the Obstacle Detected message from the text box
     fill(255);
     rect(400,380,200,20);
     fill(0);
     text("",400,380);
-    clear = 0;
-    timerStarted = 0;
   }
-  timeDiff = millis() - startTime;
-  sinceObject = millis() - timeWhenObject;
  
-  if (timeDiff > 3000 && timeDiff < 6000 && sinceObject > 1500 && start == 1){
+  if (timeSinceObstacle > 3000 && timeSinceObstacle < 6000){ // If no Obstacle detected for 3 seconds print obstacle cleared for 3 seconds
   fill(255);
   rect(400,350,200,20);
   fill(0);
   text("OBSTACLE CLEARED",400,350);
-  clear = 1;
   }
-  timeDiff = millis() - startTime;
-  if (timeDiff > 6000){
+  else{ // Remove the Obstacle Cleared message from the text box after it has been displayed for 3 seconds
   fill(255);
   rect(400,350,200,20);
   fill(0);
   text("",400,350);
-  clear = 0;
-  start = 1;
   }
-   
 }
 
-public void Start() {
+
+
+public void Start() { // Start button functionality description
 if (myClient.active()){
-myClient.write("z");
+myClient.write("z"); // Write char z to the Arduino which is the client
 println("Start Button Pressed");
 }
-background(0, 160, 0);
+background(0, 160, 0); // Set the background colour to green;
 }
 
-public void Stop() {
+public void Stop() { // // Stop button functionality description
 if (myClient.active()){
 myClient.write("s");
 println("Stop Button Pressed");
 }
-background(255, 0, 0);
+background(255, 0, 0); // Set the background colour to red;
 }
+
