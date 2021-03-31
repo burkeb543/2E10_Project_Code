@@ -41,7 +41,7 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 void setup()
 {
  //initialize the variables we're linked to
- Setpoint = 20;//at 20cm the buggy is going to stop
+ Setpoint = 25;//at 20cm the buggy is going to stop
  
  //turn the PID on
  myPID.SetMode(AUTOMATIC);
@@ -153,6 +153,7 @@ void S(){
 void obstacleProcessing(int d){
   if (d < 10){
     obstacleInFront = true;
+    S(); // Stop motors
   }
   else {
     obstacleInFront = false;
