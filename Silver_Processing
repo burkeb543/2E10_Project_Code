@@ -25,11 +25,6 @@ cp5.addButton("Stop") // Add Stop Button to screen
 rectMode(CENTER); //  Interpret the first two parameters of rect() as the shape's center point, while the third and fourth parameters are its width and height.
 textAlign(CENTER, CENTER); //  Horizontal and vertical alignment respectively
 
-fill(0); // k values for buggy
-rect(550,400,150,80);
-fill(255);
-text("Kp = 13\n Ki = 0.115\n Kd = 0",550,400);
-
 distance = 'a';
 }  
 
@@ -87,6 +82,11 @@ void draw() {
   fill(0);
   text("",200,300);
   }
+
+  fill(0); // k values for buggy
+  rect(550,400,150,80);
+  fill(255);
+  text("Kp = 13\n Ki = 0.115\n Kd = 0",550,400);
 }
 
 
