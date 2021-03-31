@@ -3,14 +3,14 @@ import processing.net.*;
 
 ControlP5 cp5; // Creation of controlP5 object
 Client myClient; // Creation of Client object
-Client myClient2;
-char distance;
+Client myClient2; // Creation of Client object
+char distance; // Char to store distance
 
 void setup() {
 size(800,700); // Set screen width to 800 and height to 700
 cp5 = new ControlP5(this); // Initialise controlP5 object
 myClient =new Client(this,"192.168.1.1",80); // Initialise Client object using Arduino IP Address
-myClient2 =new Client(this,"192.168.1.1",5200);
+myClient2 =new Client(this,"192.168.1.1",5200); // Initialise Client object using Arduino IP Address
 
 cp5.addButton("Start") // Add Start Button to screen
 .setValue(0)
@@ -25,27 +25,25 @@ cp5.addButton("Stop") // Add Stop Button to screen
 rectMode(CENTER); //  Interpret the first two parameters of rect() as the shape's center point, while the third and fourth parameters are its width and height.
 textAlign(CENTER, CENTER); //  Horizontal and vertical alignment respectively
 
-distance = 'a';
 }  
 
 
-int timeWhenObstacle;
-int timeSinceObstacle;
+int timeWhenObstacle; // Integer storing the millisecond when an obstacle was detected
+int timeSinceObstacle; // Integer storing the time in milliseconds since an obstacle was detected
 
 
 void draw() {
-  char dataIn = 'a'; 
+  char dataIn = 'a';
  
   if(myClient.available() > 0){ // If any bytes are available from the server return the number of bytes
-    dataIn = myClient.readChar();
+    dataIn = myClient.readChar(); // Read in a char from the Arduino
   }
  
   if(myClient2.available() > 0){ // If any bytes are available from the server return the number of bytes
     distance = myClient2.readChar();
-    //d = char(distance);
   }
  
-  int distanceAsInteger = int(distance);
+  int distanceAsInteger = int(distance); // Convert distance char to an integer
   fill(255);
   rect(200,450,200,20);
   fill(0);
@@ -70,13 +68,13 @@ void draw() {
     text("",200,250);
   }
  
-  if (timeSinceObstacle > 2000 && timeSinceObstacle < 4000){ // If no Obstacle detected for 3 seconds print obstacle cleared for 3 seconds
+  if (timeSinceObstacle > 2000 && timeSinceObstacle < 4000){ // If no Obstacle detected for 2 seconds print obstacle cleared for 2 seconds
   fill(255);
   rect(200,300,200,20);
   fill(0);
   text("OBSTACLE CLEARED",200,300);
   }
-  else{ // Remove the Obstacle Cleared message from the text box after it has been displayed for 3 seconds
+  else{ // Remove the Obstacle Cleared message from the text box after it has been displayed for 2 seconds
   fill(255);
   rect(200,300,200,20);
   fill(0);
@@ -86,7 +84,7 @@ void draw() {
   fill(0); // k values for buggy
   rect(550,400,150,80);
   fill(255);
-  text("Kp = 13\n Ki = 0.115\n Kd = 0",550,400);
+  text("Kp = 16\n Ki = 0.14\n Kd = 0",550,400);
 }
 
 
