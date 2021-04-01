@@ -7,9 +7,9 @@ const int REYE = 10; // Right IR Sensor digital pin
 const int LEYE = 9;  // Left IR Sensor digital pin
 
 const int LM1 = 2; // Left Motor Logic Pin 1
-const int LM2 = A5; // Left Motor Logic Pin 2
+const int LM2 = 3; // Left Motor Logic Pin 2
 const int RM1 = 5; // Right Motor Logic Pin 1
-const int RM2 = A2; // Right Motor Logic Pin 2
+const int RM2 = 6; // Right Motor Logic Pin 2
 
 const int echoPin = 15; // Echo Pin for Ultrasonic
 const int trigPin = 14; // Trig Pin for Ultrasonic
@@ -26,7 +26,7 @@ bool obstacleInFront; // True if obstacle within 10cm detected
 int count; // Count how many times the code has been looped through
 
 WiFiServer server(80); // Creating Server object
-WiFiServer server2(5200); // Creating Server object
+WiFiServer server2(300); // Creating Server object
  
 double Setpoint, Input, Output;
 double Kp = 16; // Kp higher than 10
@@ -125,9 +125,7 @@ double findDistance(){ // Calculate distance between buggy and object
 void processInstruct(){ // Receive start/stop instructions from processing
   WiFiClient client = server.available(); // Waiting for a client to connect
   char c;
-  if(client.connected()){
-    c = client.read();
-  }
+  c = client.read();
   if (c == 'z'){ // If start signal received from client
     drive = true;
   }
