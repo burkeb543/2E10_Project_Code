@@ -1,0 +1,177 @@
+import controlP5.*;
+import processing.net.*;
+
+
+ControlP5 cp5; // Creation of controlP5 object
+Client myClient; // Creation of Client object
+Client myClient2;
+Client myClient_aX;
+/*Client myClient_aY;
+Client myClient_aZ;
+Client myClient_gX;
+Client myClient_gY;
+Client myClient_gZ;*/
+char distance;
+  
+void setup() {
+  noStroke();
+  size(1000,1000, P3D); // Set screen width to 800 and height to 700
+  cp5 = new ControlP5(this); // Initialise controlP5 object
+  myClient = new Client(this,"",80); // Initialise Client object using Arduino IP Address
+  myClient2 = new Client(this,"",300);
+  myClient_aX =new Client(this,"",600);
+  /*myClient_aY =new Client(this,"",80);
+  myClient_aZ =new Client(this,"",80);
+  myClient_gX =new Client(this,"",80);
+  myClient_gY =new Client(this,"",80);
+  myClient_gZ =new Client(this,"",80);*/
+  
+  cp5.addButton("Start") // Add Start Button to screen
+  .setValue(0)
+  .setPosition(250,100)
+  .setSize(300,30); // Set size of button as width = 300 and height = 30
+  
+  cp5.addButton("Stop") // Add Stop Button to screen
+  .setValue(0)
+  .setPosition(250,600)
+  .setSize(300,30);
+  
+  rectMode(CENTER); //  Interpret the first two parameters of rect() as the shape's center point, while the third and fourth parameters are its width and height.
+  textAlign(CENTER, CENTER); //  Horizontal and vertical alignment respectively
+  
+  background(200);
+
+}  
+
+
+int timeWhenObstacle;
+int timeSinceObstacle;
+
+
+void draw() {
+  background(200);
+  char dataIn = 'a';
+  char ax;// ay, az, gx, gy, gz;
+  float aX;// aY, aZ, gX, gY, gZ;
+ 
+  if(myClient.available() > 0){ // If any bytes are available from the server return the number of bytes
+    dataIn = myClient.readChar();
+  }
+ 
+  if(myClient2.available() > 0){ // If any bytes are available from the server return the number of bytes
+    distance = myClient2.readChar();
+  }
+  
+  if(myClient_aX.available() > 0){ // If any bytes are available from the server return the number of bytes
+    ax = myClient_aX.readChar();
+    int aX_int = int(ax);
+    int radius = abs(127-aX_int);
+    fill(0, 0, 255);
+    circle(800, 800, radius*4);
+    aX = map(aX_int, 0, 255, -0.3, 0.3);
+    println(nf(aX, 0, 2));
+    //print(", ");
+  }
+  
+  /*
+  if(myClient_aY.available() > 0){ // If any bytes are available from the server return the number of bytes
+    ay = myClient_aY.readChar();
+    int aY_int = int(ay);
+    aY = map(aY_int, 0, 255, -0.3, 0.3);
+    print(nf(aY, 0, 2));
+    print(", ");
+  }
+  
+  if(myClient_aZ.available() > 0){ // If any bytes are available from the server return the number of bytes
+    az = myClient_aZ.readChar();
+    int aZ_int = int(az);
+    aZ = map(aZ_int, 0, 255, 0.85, 1.15);
+    print(nf(aZ, 0, 2));
+    print(", ");
+  }
+  
+  if(myClient_gX.available() > 0){ // If any bytes are available from the server return the number of bytes
+    gx = myClient_gX.readChar();
+    int gX_int = int(gx);
+    gX = map(gX_int, 0, 255, -0.3, 0.3);
+    print(nf(gX, 0, 2));
+    print(", ");
+  }
+  
+  if(myClient_gY.available() > 0){ // If any bytes are available from the server return the number of bytes
+    gy = myClient_gY.readChar();
+    int gY_int = int(gy);
+    gY = map(gY_int, 0, 255, -0.3, 0.3);
+    print(nf(gY, 0, 2));
+    print(", ");
+  }
+  
+  if(myClient_gZ.available() > 0){ // If any bytes are available from the server return the number of bytes
+    gz = myClient_gZ.readChar();
+    int gZ_int = int(gz);
+    gZ = map(gZ_int, 0, 255, -0.3, 0.3);
+    print(nf(gZ, 0, 2));
+    println("");
+  }
+  */
+ 
+  int distanceAsInteger = int(distance);
+  fill(255);
+  rect(200,450,200,20);
+  fill(0);
+  text("DISTANCE:  " + distanceAsInteger + " cm",200,450);
+ 
+   
+  if (dataIn == 'o'){ // Proceed if an Obstacle has been detected
+    timeWhenObstacle = millis(); // Store the time instant whe  an Obstacle was detected
+  }
+  timeSinceObstacle = millis() - timeWhenObstacle; // Calculate time since Obstacle detected
+ 
+  if (timeSinceObstacle < 2000){ // Print Obstacle detected if an Obstacle has been detected
+    fill(255);
+    rect(200,250,200,20);
+    fill(0);
+    text("OBSTACLE DETECTED",200,250);
+  }
+  else{ // Remove the Obstacle Detected message from the text box
+    fill(255);
+    rect(200,250,200,20);
+    fill(0);
+    text("",200,250);
+  }
+ 
+  if (timeSinceObstacle > 2000 && timeSinceObstacle < 4000){ // If no Obstacle detected for 3 seconds print obstacle cleared for 3 seconds
+  fill(255);
+  rect(200,300,200,20);
+  fill(0);
+  text("OBSTACLE CLEARED",200,300);
+  }
+  else{ // Remove the Obstacle Cleared message from the text box after it has been displayed for 3 seconds
+  fill(255);
+  rect(200,300,200,20);
+  fill(0);
+  text("",200,300);
+  }
+  
+  fill(0); // k values for buggy
+  rect(550,400,150,80);
+  fill(255);
+  text("Kp = 16\n Ki = 0.14\n Kd = 0",550,400);
+  
+}
+
+
+
+public void Start() { // Start button functionality description
+if (myClient.active()){
+myClient.write("z"); // Write char z to the Arduino which is the client
+println("Start Button Pressed");
+}
+}
+
+public void Stop() { // // Stop button functionality description
+if (myClient.active()){
+myClient.write("s");
+println("Stop Button Pressed");
+}
+}
