@@ -1,0 +1,226 @@
+#include <PID_v2.h>
+#include <WiFiNINA.h>
+#include <Arduino_LSM6DS3.h>
+char ssid[] = "eir87212765-2.4G"; // Add WiFi Name
+char pass[] = "j9r6anyc";  // Add WiFi password
+
+const int REYE = 10; // Right IR Sensor digital pin
+const int LEYE = 9;  // Left IR Sensor digital pin
+
+const int LM1 = 2; // Left Motor Logic Pin 1
+const int LM2 = 3; // Left Motor Logic Pin 2
+const int RM1 = 5; // Right Motor Logic Pin 1
+const int RM2 = 6; // Right Motor Logic Pin 2
+
+const int echoPin = 15; // Echo Pin for Ultrasonic
+const int trigPin = 14; // Trig Pin for Ultrasonic
+
+int LEYE_Status; // Current status of Left IR Sensor
+int REYE_Status; // Current status of Right IR Sensor
+
+long duration; // Length of time for ultrasonic ping to return
+int distance; // Distance from buggy to obstacle
+
+bool drive = false; // True if buggy receives instruction to start
+bool obstacleInFront; // True if obstacle within 10cm detected
+
+int count; // Count how many times the code has been looped through
+
+WiFiServer server(80); // Creating Server object
+WiFiServer server2(300); // Creating Server object
+
+WiFiServer server_aX(600);
+ 
+double Setpoint, Input, Output;
+double Kp = 16; // Kp higher than 10
+double Ki = 0.14; //  Ki needs to be very small
+double Kd = 0; // Kd keep as 0 because Kd is a derivative and will only work for steady signals so the rate of error is always changing
+PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
+void setup()
+{
+  Serial.begin(9600);
+  /*while (!Serial){
+    ;
+  }*/
+  if (!IMU.begin()){
+    Serial.println("Failed to initialize IMU");
+    //while (true);
+  }
+  if (IMU.begin()){
+    Serial.println("IMU Initialized!");;
+  }
+  
+   //initialize the variables we're linked to
+   Setpoint = 20;//at 25cm the buggy is going to stop
+   
+   //turn the PID on
+   myPID.SetMode(AUTOMATIC);
+   myPID.SetOutputLimits(0,255);
+
+  Serial.begin(9600);
+  pinMode( LM2, OUTPUT ); // Set Left Motor Logic pin 2 as output
+  pinMode( LM1, OUTPUT ); // Set Left Motor Logic pin 1 as output
+  pinMode( RM1, OUTPUT ); // Set Right Motor Logic pin 1 as output
+  pinMode( RM2, OUTPUT ); // Set Right Motor Logic pin 2 as output
+  pinMode( LEYE, INPUT ); // Set Left IR Sensor as input
+  pinMode( REYE, INPUT ); // Set Right IR Sensor as input
+  pinMode( LM2, LOW); // Set Left Motor Logic pin 2 to low
+  pinMode( LM1, LOW); // Set Left Motor Logic pin 1 to low
+  pinMode( RM1, LOW); // Set Right Motor Logic pin 1 to low
+  pinMode( RM2, LOW); // Set Right Motor Logic pin 2 to low
+  pinMode(trigPin, OUTPUT); // trigPin OUTPUT
+  pinMode(echoPin, INPUT); // echoPin  INPUT
+  obstacleInFront = false; // No obstacle in front
+
+  WiFi.begin(ssid, pass); // Initialize the WiFi library's network settings
+  IPAddress ip = WiFi.localIP(); // IP Address of arduino
+  Serial.print("IP Address:");
+  Serial.println(ip);
+  server.begin(); // Tells server to listen for incoming connections
+  server2.begin();
+  server_aX.begin();
+  count = 0;
+}
+
+ 
+void loop() {
+  processInstruct(); // Check for start or stop signals
+ 
+  if( drive > 0){ // If drive boolean is true proceed to drive
+    Input = findDistance();
+    obstacleProcessing(Input);
+    driveBuggy();
+  }
+  else{ // drive boolean set to false, buggy is stopped
+    S();
+  }
+ 
+  reportDistance(Input); // Send distance between buggy and object to processing
+  IMU_fn();
+}
+
+void IMU_fn(){
+  float aX, aY, aZ;
+  float gX, gY, gZ;
+  const char * spacer = ", ";
+  
+  if(
+    IMU.accelerationAvailable()
+    && IMU.gyroscopeAvailable()
+  ){
+    IMU.readAcceleration(aX, aY, aZ);
+    IMU.readGyroscope(gX, gY, gZ);
+    Serial.print(aX); Serial.print(spacer);
+    Serial.print(aY); Serial.print(spacer);
+    Serial.print(aZ); Serial.print(spacer);
+    Serial.print(gX); Serial.print(spacer);
+    Serial.print(gY); Serial.print(spacer);
+    Serial.print(gZ);
+    aX = aX * 100;
+    aY = aY * 100;
+    aZ = aZ * 100;
+    char ax = map(aX, -30, 30, 0, 255);
+    char ay = map(aY, -30, 30, 0, 255);
+    char az = map(aZ, 85, 115, 0, 255);
+    char gx = map(gX, -8.3, 8.3, 0, 255);
+    char gy = map(gY, -8.54, 1.77, 0, 255);
+    char gz = map(gZ, -88.26, 24, 0, 255);
+
+    if (count > 200 ){
+      server_aX.write(ax);
+    }
+    
+  }
+  Serial.println("");
+}
+
+void driveBuggy(){
+ 
+  LEYE_Status = digitalRead( LEYE ); // Obtain status of Left Eye
+  REYE_Status = digitalRead( REYE ); // Obtain current status of Right Eye
+ 
+  myPID.Compute(); // now output has value
+
+  if (!LEYE_Status){
+    analogWrite(LM2, Output);
+  }
+  else{
+    pinMode( LM2, LOW);
+  }
+
+  if (!REYE_Status){
+    analogWrite(RM2, Output);
+  }
+  else{
+    pinMode( RM2, LOW);
+  }
+ 
+}
+
+
+double findDistance(){ // Calculate distance between buggy and object
+ digitalWrite(trigPin, LOW);
+ delayMicroseconds(2);
+ digitalWrite(trigPin, HIGH);
+ delayMicroseconds(10);
+ digitalWrite(trigPin, LOW);
+
+ duration = pulseIn(echoPin, HIGH);
+ distance = (duration-10) * 0.034 / 2;
+
+ return distance;
+}
+
+
+void processInstruct(){ // Receive start/stop instructions from processing
+  WiFiClient client = server.available(); // Waiting for a client to connect
+  char c;
+  c = client.read();
+  if (c == 'z'){ // If start signal received from client
+    drive = true;
+  }
+  if (c == 's'){ // If Stop signal received from client
+    drive = false;
+  }
+}
+
+
+// Stop buggy
+void S(){
+  pinMode( LM2, LOW);
+  pinMode( RM2, LOW);
+}
+
+
+// If obstacle within 10cm set obstacleInFront boolean to true
+// Alert the processing that an obstacle has been detected
+void obstacleProcessing(int d){
+  if (d < 10){
+    obstacleInFront = true;
+    S();
+  }
+  else {
+    obstacleInFront = false;
+  }
+  if(obstacleInFront){
+    server.write('o');
+  }
+}
+
+
+// Send distance between buggy and object to processing
+void reportDistance(double dist){
+  if ( count > 200 ) { // Send distance once every 200 iterations
+  WiFiClient client2 = server2.available(); // Waiting for a client to connect
+ 
+  int d; // Convert distance from double to int
+  d = (int) Input;
+  char j; // Convert distance from int to char
+  j = (char) dist;
+  
+  server2.write(j); // Send distance to processing
+  count = 0;
+  }
+  count++;
+} 
