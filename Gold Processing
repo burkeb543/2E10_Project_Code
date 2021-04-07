@@ -17,14 +17,14 @@ void setup() {
   noStroke();
   size(1000,1000, P3D); // Set screen width to 800 and height to 700
   cp5 = new ControlP5(this); // Initialise controlP5 object
-  myClient = new Client(this,"",80); // Initialise Client object using Arduino IP Address
-  myClient2 = new Client(this,"",300);
-  myClient_aX =new Client(this,"",600);
-  /*myClient_aY =new Client(this,"",80);
-  myClient_aZ =new Client(this,"",80);
-  myClient_gX =new Client(this,"",80);
-  myClient_gY =new Client(this,"",80);
-  myClient_gZ =new Client(this,"",80);*/
+  myClient = new Client(this,"192.168.1.1",80); // Initialise Client object using Arduino IP Address
+  myClient2 = new Client(this,"192.168.1.1",300);
+  myClient_aX =new Client(this,"192.168.1.1",600);
+  /*myClient_aY =new Client(this,"192.168.1.1",80);
+  myClient_aZ =new Client(this,"192.168.1.1",80);
+  myClient_gX =new Client(this,"192.168.1.1",80);
+  myClient_gY =new Client(this,"192.168.1.1",80);
+  myClient_gZ =new Client(this,"192.168.1.1",80);*/
   
   cp5.addButton("Start") // Add Start Button to screen
   .setValue(0)
@@ -49,7 +49,6 @@ int timeSinceObstacle;
 
 
 void draw() {
-  background(200);
   char dataIn = 'a';
   char ax;// ay, az, gx, gy, gz;
   float aX;// aY, aZ, gX, gY, gZ;
@@ -63,12 +62,18 @@ void draw() {
   }
   
   if(myClient_aX.available() > 0){ // If any bytes are available from the server return the number of bytes
+    background(200);
     ax = myClient_aX.readChar();
     int aX_int = int(ax);
     int radius = abs(127-aX_int);
     fill(0, 0, 255);
-    circle(800, 800, radius*4);
+    circle(800, 800, radius*3);
+    
     aX = map(aX_int, 0, 255, -0.3, 0.3);
+    rect(800,800,20,20);
+    fill(255);
+    text("Acceleration in x-direction",800,750);
+    text(""+nf(aX, 0, 2),800,800);
     println(nf(aX, 0, 2));
     //print(", ");
   }
