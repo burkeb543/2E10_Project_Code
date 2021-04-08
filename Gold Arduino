@@ -1,8 +1,8 @@
 #include <PID_v2.h>
 #include <WiFiNINA.h>
 #include <Arduino_LSM6DS3.h>
-char ssid[] = "eir87212765-2.4G"; // Add WiFi Name
-char pass[] = "j9r6anyc";  // Add WiFi password
+char ssid[] = ""; // Add WiFi Name
+char pass[] = "";  // Add WiFi password
 
 const int REYE = 10; // Right IR Sensor digital pin
 const int LEYE = 9;  // Left IR Sensor digital pin
@@ -21,7 +21,7 @@ int REYE_Status; // Current status of Right IR Sensor
 long duration; // Length of time for ultrasonic ping to return
 int distance; // Distance from buggy to obstacle
 
-bool drive = false; // True if buggy receives instruction to start
+bool drive = false;
 bool obstacleInFront; // True if obstacle within 10cm detected
 
 int count; // Count how many times the code has been looped through
@@ -30,6 +30,12 @@ WiFiServer server(80); // Creating Server object
 WiFiServer server2(300); // Creating Server object
 
 WiFiServer server_aX(600);
+WiFiServer server_aY(600);
+WiFiServer server_aZ(600);
+WiFiServer server_gX(600);
+WiFiServer server_gY(600);
+WiFiServer server_gZ(300);
+
  
 double Setpoint, Input, Output;
 double Kp = 16; // Kp higher than 10
@@ -80,6 +86,11 @@ void setup()
   server.begin(); // Tells server to listen for incoming connections
   server2.begin();
   server_aX.begin();
+  server_aY.begin();
+  server_aZ.begin();
+  server_gX.begin();
+  server_gY.begin();
+  server_gZ.begin();
   count = 0;
 }
 
@@ -105,7 +116,7 @@ void IMU_fn(){
   float gX, gY, gZ;
   const char * spacer = ", ";
   
-  if(
+  if( count % 20 == 0 &&
     IMU.accelerationAvailable()
     && IMU.gyroscopeAvailable()
   ){
@@ -120,17 +131,22 @@ void IMU_fn(){
     aX = aX * 100;
     aY = aY * 100;
     aZ = aZ * 100;
+    gX = gX * 10;
+    gY = gY * 10;
+    gZ = gZ * 10;
     char ax = map(aX, -30, 30, 0, 255);
     char ay = map(aY, -30, 30, 0, 255);
     char az = map(aZ, 85, 115, 0, 255);
-    char gx = map(gX, -8.3, 8.3, 0, 255);
-    char gy = map(gY, -8.54, 1.77, 0, 255);
-    char gz = map(gZ, -88.26, 24, 0, 255);
-
-    if (count > 200 ){
-      server_aX.write(ax);
-    }
-    
+    char gx = map(gX, -83, 83, 0, 255);
+    char gy = map(gY, -85.4, 17.7, 0, 255);
+    char gz = map(gZ, -882.6, 240, 0, 255);
+  
+    server_aX.write(ax);
+    server_aY.write(ay);
+    server_aZ.write(az);
+    server_gX.write(gx);
+    server_gY.write(gy);
+    server_gZ.write(gz);
   }
   Serial.println("");
 }
@@ -223,4 +239,4 @@ void reportDistance(double dist){
   count = 0;
   }
   count++;
-} 
+}  
