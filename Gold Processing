@@ -6,25 +6,25 @@ ControlP5 cp5; // Creation of controlP5 object
 Client myClient; // Creation of Client object
 Client myClient2;
 Client myClient_aX;
-/*Client myClient_aY;
+Client myClient_aY;
 Client myClient_aZ;
 Client myClient_gX;
 Client myClient_gY;
-Client myClient_gZ;*/
+Client myClient_gZ;
 char distance;
   
 void setup() {
   noStroke();
   size(1000,1000, P3D); // Set screen width to 800 and height to 700
   cp5 = new ControlP5(this); // Initialise controlP5 object
-  myClient = new Client(this,"192.168.1.1",80); // Initialise Client object using Arduino IP Address
-  myClient2 = new Client(this,"192.168.1.1",300);
-  myClient_aX =new Client(this,"192.168.1.1",600);
-  /*myClient_aY =new Client(this,"192.168.1.1",80);
-  myClient_aZ =new Client(this,"192.168.1.1",80);
-  myClient_gX =new Client(this,"192.168.1.1",80);
-  myClient_gY =new Client(this,"192.168.1.1",80);
-  myClient_gZ =new Client(this,"192.168.1.1",80);*/
+  myClient = new Client(this,"",80); // Initialise Client object using Arduino IP Address
+  myClient2 = new Client(this,"",300);
+  myClient_aX =new Client(this,"",600);
+  myClient_aY =new Client(this,"",600);
+  myClient_aZ =new Client(this,"",600);
+  myClient_gX =new Client(this,"",600);
+  myClient_gY =new Client(this,"",600);
+  myClient_gZ =new Client(this,"",300);
   
   cp5.addButton("Start") // Add Start Button to screen
   .setValue(0)
@@ -50,8 +50,8 @@ int timeSinceObstacle;
 
 void draw() {
   char dataIn = 'a';
-  char ax;// ay, az, gx, gy, gz;
-  float aX;// aY, aZ, gX, gY, gZ;
+  char ax, ay, az, gx, gy, gz;
+  float aX, aY, aZ, gX, gY, gZ;
  
   if(myClient.available() > 0){ // If any bytes are available from the server return the number of bytes
     dataIn = myClient.readChar();
@@ -62,63 +62,86 @@ void draw() {
   }
   
   if(myClient_aX.available() > 0){ // If any bytes are available from the server return the number of bytes
-    background(200);
+    background(150);
     ax = myClient_aX.readChar();
     int aX_int = int(ax);
-    int radius = abs(127-aX_int);
+    int radius_aX = abs(127-aX_int);
     fill(0, 0, 255);
-    circle(800, 800, radius*3);
+    circle(800, 800, radius_aX*3);
     
     aX = map(aX_int, 0, 255, -0.3, 0.3);
     rect(800,800,20,20);
     fill(255);
     text("Acceleration in x-direction",800,750);
+    //print("aX: ");
     text(""+nf(aX, 0, 2),800,800);
-    println(nf(aX, 0, 2));
-    //print(", ");
+    //print(nf(aX, 0, 2));
+    //print("   ");
   }
   
-  /*
   if(myClient_aY.available() > 0){ // If any bytes are available from the server return the number of bytes
     ay = myClient_aY.readChar();
     int aY_int = int(ay);
+    int radius_aY = abs(127-aY_int);
+    fill(255, 0, 0);
+    circle(450, 800, radius_aY*3);
+    
     aY = map(aY_int, 0, 255, -0.3, 0.3);
-    print(nf(aY, 0, 2));
-    print(", ");
+    rect(450,800,20,20);
+    fill(255);
+    text("Acceleration in y-direction",450,750);
+    text(""+nf(aY, 0, 2),450,800);
+    //print("aY: ");
+    //print(nf(aY, 0, 2));
   }
   
   if(myClient_aZ.available() > 0){ // If any bytes are available from the server return the number of bytes
     az = myClient_aZ.readChar();
     int aZ_int = int(az);
+    int radius_aZ = abs(127-aZ_int);
+    fill(238,130,238);
+    circle(150, 800, radius_aZ*3);
+    
     aZ = map(aZ_int, 0, 255, 0.85, 1.15);
-    print(nf(aZ, 0, 2));
-    print(", ");
+    rect(150,800,20,20);
+    fill(255);
+    text("Acceleration in z-direction",150,750);
+    text(""+nf(aZ, 0, 2),150,800);
+    //print("aZ: ");
+    //print(nf(aZ, 0, 2));
   }
-  
+  /*
   if(myClient_gX.available() > 0){ // If any bytes are available from the server return the number of bytes
     gx = myClient_gX.readChar();
     int gX_int = int(gx);
-    gX = map(gX_int, 0, 255, -0.3, 0.3);
+    gX = map(gX_int, 0, 255, -8.3, 8.3);
+    print("gX: ");
     print(nf(gX, 0, 2));
-    print(", ");
+    print("   ");
   }
   
   if(myClient_gY.available() > 0){ // If any bytes are available from the server return the number of bytes
     gy = myClient_gY.readChar();
     int gY_int = int(gy);
-    gY = map(gY_int, 0, 255, -0.3, 0.3);
-    print(nf(gY, 0, 2));
-    print(", ");
+    gY = map(gY_int, 0, 255, -8.54, 1.77);
+    //print("gY: ");
+    //print(nf(gY, 0, 2));
+    //print("  ");
   }
   
   if(myClient_gZ.available() > 0){ // If any bytes are available from the server return the number of bytes
     gz = myClient_gZ.readChar();
+    myClient_gZ.clear();
+    // Close the port
+    //myClient_gZ.stop();
     int gZ_int = int(gz);
-    gZ = map(gZ_int, 0, 255, -0.3, 0.3);
-    print(nf(gZ, 0, 2));
+    gZ = map(gZ_int, 0, 255, -88.26, 24  );
+    //print("gZ: ");
+    //println(nf(gZ, 0, 2));
     println("");
   }
   */
+  
  
   int distanceAsInteger = int(distance);
   fill(255);
