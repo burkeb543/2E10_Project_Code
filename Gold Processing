@@ -20,8 +20,8 @@ void setup() {
   myClient = new Client(this,"",80); // Initialise Client object using Arduino IP Address
   myClient2 = new Client(this,"",300);
   myClient_aX =new Client(this,"",600);
-  myClient_aY =new Client(this,"",600);
-  myClient_aZ =new Client(this,"",600);
+  myClient_aY =new Client(this,"",2400);
+  myClient_aZ =new Client(this,"",1200);
   myClient_gX =new Client(this,"",600);
   myClient_gY =new Client(this,"",600);
   myClient_gZ =new Client(this,"",300);
