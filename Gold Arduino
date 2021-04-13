@@ -30,8 +30,8 @@ WiFiServer server(80); // Creating Server object
 WiFiServer server2(300); // Creating Server object
 
 WiFiServer server_aX(600);
-WiFiServer server_aY(600);
-WiFiServer server_aZ(600);
+WiFiServer server_aY(2400);
+WiFiServer server_aZ(1200);
 WiFiServer server_gX(600);
 WiFiServer server_gY(600);
 WiFiServer server_gZ(300);
@@ -116,7 +116,7 @@ void IMU_fn(){
   float gX, gY, gZ;
   const char * spacer = ", ";
   
-  if( count % 20 == 0 &&
+  if( count % 30 == 0 &&
     IMU.accelerationAvailable()
     && IMU.gyroscopeAvailable()
   ){
