@@ -1,205 +1,239 @@
 import controlP5.*;
 import processing.net.*;
 
+// Creation of controlP5 object
+ControlP5 cp5;
 
-ControlP5 cp5; // Creation of controlP5 object
-Client myClient; // Creation of Client object
-Client myClient2;
-Client myClient_aX;
-Client myClient_aY;
-Client myClient_aZ;
-Client myClient_gX;
-Client myClient_gY;
-Client myClient_gZ;
-char distance;
-  
+// Creation of PFont objects
+PFont f;
+PFont g;
+
+// Creation of Client objects
+Client myClient;
+Client myClient_2;
+
+ 
 void setup() {
-  noStroke();
-  size(1000,1000, P3D); // Set screen width to 800 and height to 700
+  frameRate(30); // Set framerate to 30
+  f = createFont("Arial", 15); // Initialising PFont object f
+  g = createFont("Arial", 60); // Initialising PFont object g
+  
+  size(1000,1000); // Set screen width to 1000 and height to 1000
+  
+  String IP_Address = ""; // String to store IP Address
+  
+  // Initialising client objects
+  myClient =new Client(this,IP_Address,80);
+  myClient_2 =new Client(this,IP_Address,300);
+  
   cp5 = new ControlP5(this); // Initialise controlP5 object
-  myClient = new Client(this,"",80); // Initialise Client object using Arduino IP Address
-  myClient2 = new Client(this,"",300);
-  myClient_aX =new Client(this,"",600);
-  myClient_aY =new Client(this,"",2400);
-  myClient_aZ =new Client(this,"",1200);
-  myClient_gX =new Client(this,"",600);
-  myClient_gY =new Client(this,"",600);
-  myClient_gZ =new Client(this,"",300);
   
   cp5.addButton("Start") // Add Start Button to screen
   .setValue(0)
-  .setPosition(250,100)
-  .setSize(300,30); // Set size of button as width = 300 and height = 30
+  .setPosition(450,410)
+  .setSize(100,30) // Set size of button as width = 100 and height = 30
+  .setColorBackground( color(34,139,34)); // Set color of button
+ 
+  cp5.addButton("Manual") // Add Manual Button to screen to enable manual mode
+  .setValue(0)
+  .setPosition(350,500)
+  .setSize(100,30) 
+  .setColorBackground( color(10,176,157));
+  
+  cp5.addButton("Automatic") // Add Automatic Button to screen which disables manual mode and enables automatic mode
+  .setValue(0)
+  .setPosition(550,500)
+  .setSize(100,30) 
+  .setColorBackground( color(255,99,97));
   
   cp5.addButton("Stop") // Add Stop Button to screen
   .setValue(0)
-  .setPosition(250,600)
-  .setSize(300,30);
+  .setPosition(450,590)
+  .setSize(100,30)
+  .setColorBackground( color(255,0,0));
   
   rectMode(CENTER); //  Interpret the first two parameters of rect() as the shape's center point, while the third and fourth parameters are its width and height.
   textAlign(CENTER, CENTER); //  Horizontal and vertical alignment respectively
   
-  background(200);
+  noStroke(); // Disables drawing the stroke
+ 
+  background(40); // Set background color of sketch 
 
 }  
 
 
-int timeWhenObstacle;
-int timeSinceObstacle;
-
-
 void draw() {
-  char dataIn = 'a';
+ 
+  // Declaration of chars to store acceleration and gyroscopic data
   char ax, ay, az, gx, gy, gz;
+  
+   // Declaration of floats to which chars representing sensor data read in from arduino will be mapped
   float aX, aY, aZ, gX, gY, gZ;
  
-  if(myClient.available() > 0){ // If any bytes are available from the server return the number of bytes
-    dataIn = myClient.readChar();
-  }
- 
-  if(myClient2.available() > 0){ // If any bytes are available from the server return the number of bytes
-    distance = myClient2.readChar();
-  }
+  textFont(f);
   
-  if(myClient_aX.available() > 0){ // If any bytes are available from the server return the number of bytes
-    background(150);
-    ax = myClient_aX.readChar();
-    int aX_int = int(ax);
-    int radius_aX = abs(127-aX_int);
-    fill(0, 0, 255);
-    circle(800, 800, radius_aX*3);
+  if(myClient.available() > 0){ // If any bytes are available to be read from the arduino server return true
+    String g_Data = myClient.readString();  // Read in string containing gyroscopic data for y and z directions
+    background(40); // Refresh background
     
-    aX = map(aX_int, 0, 255, -0.3, 0.3);
-    rect(800,800,20,20);
+    // Display relevant labels for the data displayed on the top and bottom of the processing window
+    textFont(g);
     fill(255);
-    text("Acceleration in x-direction",800,750);
-    //print("aX: ");
-    text(""+nf(aX, 0, 2),800,800);
-    //print(nf(aX, 0, 2));
-    //print("   ");
-  }
-  
-  if(myClient_aY.available() > 0){ // If any bytes are available from the server return the number of bytes
-    ay = myClient_aY.readChar();
-    int aY_int = int(ay);
-    int radius_aY = abs(127-aY_int);
-    fill(255, 0, 0);
-    circle(450, 800, radius_aY*3);
+    text("Gyroscopic Data",500,50);
+    text("Acceleration Data",500,900);
     
-    aY = map(aY_int, 0, 255, -0.3, 0.3);
-    rect(450,800,20,20);
-    fill(255);
-    text("Acceleration in y-direction",450,750);
-    text(""+nf(aY, 0, 2),450,800);
-    //print("aY: ");
-    //print(nf(aY, 0, 2));
-  }
+    // Display manual control buttons to user
+    textFont(f);
+    text("Forward: w\nReverse: s\nRight: d\nLeft: a",920,115);
+    text("Spin right: e\nSpin left: q\nStop: Spacebar\n",80,130);
   
-  if(myClient_aZ.available() > 0){ // If any bytes are available from the server return the number of bytes
-    az = myClient_aZ.readChar();
-    int aZ_int = int(az);
-    int radius_aZ = abs(127-aZ_int);
-    fill(238,130,238);
-    circle(150, 800, radius_aZ*3);
-    
-    aZ = map(aZ_int, 0, 255, 0.85, 1.15);
-    rect(150,800,20,20);
-    fill(255);
-    text("Acceleration in z-direction",150,750);
-    text(""+nf(aZ, 0, 2),150,800);
-    //print("aZ: ");
-    //print(nf(aZ, 0, 2));
-  }
-  /*
-  if(myClient_gX.available() > 0){ // If any bytes are available from the server return the number of bytes
-    gx = myClient_gX.readChar();
-    int gX_int = int(gx);
-    gX = map(gX_int, 0, 255, -8.3, 8.3);
-    print("gX: ");
-    print(nf(gX, 0, 2));
-    print("   ");
-  }
-  
-  if(myClient_gY.available() > 0){ // If any bytes are available from the server return the number of bytes
-    gy = myClient_gY.readChar();
-    int gY_int = int(gy);
-    gY = map(gY_int, 0, 255, -8.54, 1.77);
-    //print("gY: ");
-    //print(nf(gY, 0, 2));
-    //print("  ");
-  }
-  
-  if(myClient_gZ.available() > 0){ // If any bytes are available from the server return the number of bytes
-    gz = myClient_gZ.readChar();
-    myClient_gZ.clear();
-    // Close the port
-    //myClient_gZ.stop();
-    int gZ_int = int(gz);
-    gZ = map(gZ_int, 0, 255, -88.26, 24  );
-    //print("gZ: ");
-    //println(nf(gZ, 0, 2));
-    println("");
-  }
-  */
-  
- 
-  int distanceAsInteger = int(distance);
-  fill(255);
-  rect(200,450,200,20);
-  fill(0);
-  text("DISTANCE:  " + distanceAsInteger + " cm",200,450);
- 
    
-  if (dataIn == 'o'){ // Proceed if an Obstacle has been detected
-    timeWhenObstacle = millis(); // Store the time instant whe  an Obstacle was detected
-  }
-  timeSinceObstacle = millis() - timeWhenObstacle; // Calculate time since Obstacle detected
- 
-  if (timeSinceObstacle < 2000){ // Print Obstacle detected if an Obstacle has been detected
+    char[] ch = new char[7]; // Create char array to store string elements
+    for(int i = 0; i < 6; i++){
+      ch[i] = g_Data.charAt(i); // Copying chars from string to char array
+    }
+    
+    // Assigning values from char array to individual chars
+    ax = ch[0];
+    ay = ch[1];
+    az = ch[2];
+    gx = ch[3];
+    gy = ch[4];
+    gz = ch[5];
+    
+    
+    int gY_int = int(gy); // Convert char storing pitch to an integer
+    gY = map(gY_int, 0, 127, -21.12, 15.26); // Remap number back from char to float
     fill(255);
-    rect(200,250,200,20);
-    fill(0);
-    text("OBSTACLE DETECTED",200,250);
-  }
-  else{ // Remove the Obstacle Detected message from the text box
+    text("Pitch: "+nf(gY, 0, 2)+" °/s",500,300); // Display value for pitch
+    
+    int side_gY = abs(63-gY_int); // Determine length of rectangle by finding magnitude of the pitch
+    fill(255, 255, 0);
+    rect(500, 200, side_gY*2, 55); // Display rectangle
+    
+    
+    int gZ_int = int(gz); // Convert char storing yaw to an integer
+    gZ = map(gZ_int, 0, 127, -176.27, 175.84); // Remap number back from char to float
     fill(255);
-    rect(200,250,200,20);
-    fill(0);
-    text("",200,250);
+    text("Yaw: "+nf(gZ, 0, 2)+" °/s",750,450); // Display value for yaw
+    int side_gZ = abs(63-gZ_int); // Determine length of rectangle by finding magnitude of the yaw
+    fill(255, 94, 19);
+    rect(750, 350, side_gZ*2, 55); // Create a rectangle which reflects the magnitude of the yaw
+    
+    
+    int gX_int = int(gx); // Convert char storing roll to an integer
+    gX = map(gX_int, 0, 127, -16.36, 16.42); // Remap number back from char to float
+    fill(255);
+    text("Roll: "+nf(gX, 0, 2)+" °/s",250,450); // Display value for roll
+    int side_gX = abs(63-gX_int); // Determine length of rectangle by finding magnitude of the roll
+    fill(0, 255, 0);
+    rect(250, 350, side_gX*2, 55); // Create a rectangle which reflects the magnitude of the roll
+    
+    
+    
+    // Displaying data for acceleration in x-direction
+    int aX_int = int(ax); // Typecast char read in to integer form
+    int radius_aX = abs(63-aX_int); // Determine radius of circle to represent magnitude of the acceleration in x-direction
+    fill(0, 0, 255); // Set color of circle to blue
+    circle(250, 650, radius_aX*2); // Display circle
+    aX = map(aX_int, 0, 127, -0.56, 0.82); //  Map the float onto a range which was found through extensive measuring 
+    fill(255);
+    text("Acceleration in X-direction in G's",250,600);
+    text(""+nf(aX, 0, 2),250,650); // Output acceleration in the centre of the circle
+    
+    // Displaying data for acceleration in y-direction
+    int aY_int = int(ay);
+    int radius_aY = abs(63-aY_int);
+    fill(255, 0, 0);
+    circle(500, 800, radius_aY*2);
+    aY = map(aY_int, 0, 127, -0.5, 0.44);
+    fill(255);
+    text("Acceleration in Y-direction in G's",500,750);
+    text(""+nf(aY, 0, 2),500,800);
+    
+    // Displaying data for acceleration in x-direction
+    int aZ_int = int(az);
+    int radius_aZ = abs(63-aZ_int);
+    fill(238,130,238); 
+    circle(750, 650, radius_aZ*2);
+    aZ = map(aZ_int, 0, 127, 0.6, 1.5);
+    fill(255);
+    text("Acceleration in Z-direction in G's",750,600);
+    text(""+nf(aZ, 0, 2),750,650);
   }
+
+}
+
+
+// Start button functionality description
+public void Start() {
+  if (myClient.active()){
+    myClient.write("l"); // Write char l to the Arduino which is the client
+    println("Start Button Pressed");
+  }
+}
+
+// Stop button functionality description
+public void Stop() {
+  if (myClient.active()){
+    myClient.write("p");
+    println("Stop Button Pressed");
+  }
+}
+
+// Stop button functionality description
+public void Manual() {
+  if (myClient.active()){
+    myClient.write("m");
+    println("Manual Button Pressed");
+  }
+}
+
+// Stop button functionality description
+public void Automatic() {
+  if (myClient.active()){
+    myClient.write("g");
+    println("Automatic Button Pressed");
+  }
+}
+
+
+// To handle manual control of the buggy
+public void keyPressed(){
+ char lastKey = char(key); // Obtain last key pressed on the keyboard
  
-  if (timeSinceObstacle > 2000 && timeSinceObstacle < 4000){ // If no Obstacle detected for 3 seconds print obstacle cleared for 3 seconds
-  fill(255);
-  rect(200,300,200,20);
-  fill(0);
-  text("OBSTACLE CLEARED",200,300);
-  }
-  else{ // Remove the Obstacle Cleared message from the text box after it has been displayed for 3 seconds
-  fill(255);
-  rect(200,300,200,20);
-  fill(0);
-  text("",200,300);
+ // Depending on what key was pressed, send the appropriate char to the arduino
+ switch(lastKey) {
+  case 'w': 
+    println("Forward");
+    myClient_2.write("w");
+    break;
+  case 's': 
+    println("Backward");
+    myClient_2.write("s");
+    break;
+  case 'a': 
+    println("Left");
+    myClient_2.write("a");
+    break;
+  case 'd': 
+    println("Right");
+    myClient_2.write("d");
+    break;
+  case 'e': 
+    println("Spin Right");
+    myClient_2.write("e");
+    break;
+  case 'q': 
+    println("Spin Left");
+    myClient_2.write("q");
+    break;
+  case ' ': 
+    println("Stop");
+    myClient_2.write("k");
+    break;
+  default: 
+    break;
   }
   
-  fill(0); // k values for buggy
-  rect(550,400,150,80);
-  fill(255);
-  text("Kp = 16\n Ki = 0.14\n Kd = 0",550,400);
-  
-}
-
-
-
-public void Start() { // Start button functionality description
-if (myClient.active()){
-myClient.write("z"); // Write char z to the Arduino which is the client
-println("Start Button Pressed");
-}
-}
-
-public void Stop() { // // Stop button functionality description
-if (myClient.active()){
-myClient.write("s");
-println("Stop Button Pressed");
-}
 }
