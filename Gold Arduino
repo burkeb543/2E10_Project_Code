@@ -21,50 +21,42 @@ int REYE_Status; // Current status of Right IR Sensor
 long duration; // Length of time for ultrasonic ping to return
 int distance; // Distance from buggy to obstacle
 
-bool drive = false;
-bool obstacleInFront; // True if obstacle within 10cm detected
+bool obstacleInFront = false; // Set to true if obstacle within 10cm detected
+bool drive = false; // Set to true if start or automatic button pressed
+bool manual = false; // Set to true if manual mode button pressed 
+
+unsigned long myTime; // Variable to store the time instant when a manual instruction received from processing
+unsigned long timeSinceManual; // Variable to store the length of time since a manual instruction received
 
 int count; // Count how many times the code has been looped through
 
-WiFiServer server(80); // Creating Server object
-WiFiServer server2(300); // Creating Server object
+// Declaration of servers to communicate with processing
+WiFiServer server(80);
+WiFiServer server_2(300);
 
-WiFiServer server_aX(600);
-WiFiServer server_aY(2400);
-WiFiServer server_aZ(1200);
-WiFiServer server_gX(600);
-WiFiServer server_gY(600);
-WiFiServer server_gZ(300);
-
- 
+// Declaration of PID variables 
 double Setpoint, Input, Output;
 double Kp = 16; // Kp higher than 10
 double Ki = 0.14; //  Ki needs to be very small
 double Kd = 0; // Kd keep as 0 because Kd is a derivative and will only work for steady signals so the rate of error is always changing
-PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT); // Declaration of PID object
 
 void setup()
 {
   Serial.begin(9600);
-  /*while (!Serial){
-    ;
-  }*/
   if (!IMU.begin()){
     Serial.println("Failed to initialize IMU");
-    //while (true);
   }
   if (IMU.begin()){
     Serial.println("IMU Initialized!");;
   }
-  
-   //initialize the variables we're linked to
-   Setpoint = 20;//at 25cm the buggy is going to stop
+ 
+  Setpoint = 20; // At 20cm the buggy is going to stop
    
-   //turn the PID on
-   myPID.SetMode(AUTOMATIC);
-   myPID.SetOutputLimits(0,255);
+  //turn the PID on
+  myPID.SetMode(AUTOMATIC);
+  myPID.SetOutputLimits(0,255);
 
-  Serial.begin(9600);
   pinMode( LM2, OUTPUT ); // Set Left Motor Logic pin 2 as output
   pinMode( LM1, OUTPUT ); // Set Left Motor Logic pin 1 as output
   pinMode( RM1, OUTPUT ); // Set Right Motor Logic pin 1 as output
@@ -75,90 +67,96 @@ void setup()
   pinMode( LM1, LOW); // Set Left Motor Logic pin 1 to low
   pinMode( RM1, LOW); // Set Right Motor Logic pin 1 to low
   pinMode( RM2, LOW); // Set Right Motor Logic pin 2 to low
-  pinMode(trigPin, OUTPUT); // trigPin OUTPUT
-  pinMode(echoPin, INPUT); // echoPin  INPUT
-  obstacleInFront = false; // No obstacle in front
+  pinMode(trigPin, OUTPUT); // trigPin set to OUTPUT
+  pinMode(echoPin, INPUT); // echoPin set to INPUT
 
   WiFi.begin(ssid, pass); // Initialize the WiFi library's network settings
   IPAddress ip = WiFi.localIP(); // IP Address of arduino
   Serial.print("IP Address:");
   Serial.println(ip);
-  server.begin(); // Tells server to listen for incoming connections
-  server2.begin();
-  server_aX.begin();
-  server_aY.begin();
-  server_aZ.begin();
-  server_gX.begin();
-  server_gY.begin();
-  server_gZ.begin();
-  count = 0;
-}
 
+  // Tell servers to listen for incoming client connections
+  server.begin();
+  server_2.begin();
+  count = 0; // Initialise variable to count loop iterations
+}
  
 void loop() {
-  processInstruct(); // Check for start or stop signals
+ processInstruct(); // Check if any signals received from processing
+
+ if ( manual ){ // If buggy is in manual mode
+   manualInstruct(); // Function which checks which WASD key was pressed and calls the appropriate function
+ }
  
-  if( drive > 0){ // If drive boolean is true proceed to drive
-    Input = findDistance();
-    obstacleProcessing(Input);
+ if( drive){ // If drive boolean is true proceed to drive 
     driveBuggy();
-  }
-  else{ // drive boolean set to false, buggy is stopped
-    S();
-  }
- 
-  reportDistance(Input); // Send distance between buggy and object to processing
-  IMU_fn();
+ }
+
+ if ( !manual && !drive ){ // If stop signal received from processing
+  S(); // Stop the buggy
+ }
+
+ IMU_fn(); // Send acceleration and gyroscopic data to processing
 }
 
+
+// Function to deal with acceleration and gyroscopic data
 void IMU_fn(){
+  
+  // Declaration of variables to store sensor data
   float aX, aY, aZ;
   float gX, gY, gZ;
-  const char * spacer = ", ";
-  
-  if( count % 30 == 0 &&
+ 
+  if(
     IMU.accelerationAvailable()
     && IMU.gyroscopeAvailable()
   ){
     IMU.readAcceleration(aX, aY, aZ);
     IMU.readGyroscope(gX, gY, gZ);
-    Serial.print(aX); Serial.print(spacer);
-    Serial.print(aY); Serial.print(spacer);
-    Serial.print(aZ); Serial.print(spacer);
-    Serial.print(gX); Serial.print(spacer);
-    Serial.print(gY); Serial.print(spacer);
-    Serial.print(gZ);
+
+    // Scaling values increases mapping accuracy
     aX = aX * 100;
     aY = aY * 100;
     aZ = aZ * 100;
-    gX = gX * 10;
-    gY = gY * 10;
-    gZ = gZ * 10;
-    char ax = map(aX, -30, 30, 0, 255);
-    char ay = map(aY, -30, 30, 0, 255);
-    char az = map(aZ, 85, 115, 0, 255);
-    char gx = map(gX, -83, 83, 0, 255);
-    char gy = map(gY, -85.4, 17.7, 0, 255);
-    char gz = map(gZ, -882.6, 240, 0, 255);
-  
-    server_aX.write(ax);
-    server_aY.write(ay);
-    server_aZ.write(az);
-    server_gX.write(gx);
-    server_gY.write(gy);
-    server_gZ.write(gz);
+    gX = gX * 100;
+    gY = gY * 100;
+    gZ = gZ * 100;
+    
+
+    // Values mapped using values which were determined through extensive measuring
+    char ax = map(aX, -56, 82, 0, 127);
+    char ay = map(aY, -50, 44, 0, 127);
+    char az = map(aZ, 60, 150, 0, 127);
+    char gx = map(gX, -1636, 1642, 0, 127);
+    char gy = map(gY, -2112, 1526, 0, 127);
+    char gz = map(gZ, -17627, 17584, 0, 127);
+
+    // Creating a char array to send to processing
+    char ag[7] = {ax, ay, az, gx, gy, gz};
+
+    // Sensor data sent to processing
+    server.write(ag);
+   
   }
-  Serial.println("");
+
+  // Re-initialise the IMU periodically to prevent drift over time
+  if ( count > 100 ){
+    IMU.end();
+    IMU.begin();
+  }
 }
+
 
 void driveBuggy(){
  
   LEYE_Status = digitalRead( LEYE ); // Obtain status of Left Eye
   REYE_Status = digitalRead( REYE ); // Obtain current status of Right Eye
+
+  Input = findDistance(); // Store distance to object in variable Input
  
   myPID.Compute(); // now output has value
 
-  if (!LEYE_Status){
+  if (!LEYE_Status){ // If left IR sensor detects white
     analogWrite(LM2, Output);
   }
   else{
@@ -175,68 +173,139 @@ void driveBuggy(){
 }
 
 
-double findDistance(){ // Calculate distance between buggy and object
- digitalWrite(trigPin, LOW);
- delayMicroseconds(2);
- digitalWrite(trigPin, HIGH);
- delayMicroseconds(10);
- digitalWrite(trigPin, LOW);
-
- duration = pulseIn(echoPin, HIGH);
- distance = (duration-10) * 0.034 / 2;
-
- return distance;
+// Returns distance between buggy and object
+double findDistance(){ 
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  distance = (duration-10) * 0.017;
+  
+  return distance;
 }
 
 
-void processInstruct(){ // Receive start/stop instructions from processing
+// Receive start/stop or manual/automatic instructions from processing
+void processInstruct(){
   WiFiClient client = server.available(); // Waiting for a client to connect
-  char c;
-  c = client.read();
-  if (c == 'z'){ // If start signal received from client
-    drive = true;
-  }
-  if (c == 's'){ // If Stop signal received from client
+  char c = client.read(); // Read signal from processing
+
+  switch( c ){
+    case 'l': drive = true; // If start signal received from client
+    manual = false;
+    break;
+    case 'p': drive = false; // If Stop signal received from client
+    manual = false;
+    S(); // Stop the buggy
+    break;
+    case 'm': manual = true; // If manual signal received from client
     drive = false;
+    break;
+    case 'g': manual = false; // If automatic signal received from client
+    drive = true;
+    break;
+    default: break;
   }
+
+}
+
+
+// Process instructions for manual control of the buggy
+void manualInstruct(){
+  WiFiClient client2 = server_2.available(); // Waiting for a client to connect
+  char m = client2.read();
+
+  switch( m ){
+    case 'w': forward(); // Move forward if w key pressed
+    myTime = millis();
+    break;
+    case 's': backward(); // Move backward if s key pressed
+    myTime = millis();
+    break;
+    case 'a': left(); // Turn left if a key pressed
+    myTime = millis();
+    break;
+    case 'd': right(); // Turn right if d key pressed
+    myTime = millis();
+    break;
+    case 'e': spinRight(); // Spin buggy right if e key pressed
+    myTime = millis();
+    break;
+    case 'q': spinLeft(); // Spin buggy left if q key pressed
+    myTime = millis();
+    break;
+    case 'k': S(); // Stop buggy if spacebar key pressed
+    break;
+    default: break;
+  }
+  
+  timeSinceManual = millis() - myTime; // Calculate time since a key was pressed
+  if (timeSinceManual > 1000){
+    S(); // Stop the buggy if no key pressed for a second
+  }
+}
+
+
+// Move the buggy forward
+void forward(){
+  pinMode( LM1, LOW);
+  analogWrite( LM2, 40);
+  pinMode( RM1, LOW);
+  analogWrite( RM2, 40);
+}
+
+
+// Reverse the buggy
+void backward(){
+  analogWrite( LM1, 40);
+  pinMode( LM2, LOW);
+  analogWrite( RM1, 40);
+  pinMode( RM2, LOW);
+}
+
+
+//Turn buggy right
+void right(){
+  pinMode( LM1, LOW);
+  analogWrite( LM2, 90);
+  pinMode( RM1, LOW);
+  pinMode( RM2, LOW);
+}
+
+
+// Turn buggy left
+void left(){
+  pinMode( LM1, LOW);
+  pinMode( LM2, LOW);
+  pinMode( RM1, LOW);
+  analogWrite( RM2, 90);
 }
 
 
 // Stop buggy
 void S(){
+  pinMode( LM1, LOW);
   pinMode( LM2, LOW);
+  pinMode( RM1, LOW);
   pinMode( RM2, LOW);
 }
 
 
-// If obstacle within 10cm set obstacleInFront boolean to true
-// Alert the processing that an obstacle has been detected
-void obstacleProcessing(int d){
-  if (d < 10){
-    obstacleInFront = true;
-    S();
-  }
-  else {
-    obstacleInFront = false;
-  }
-  if(obstacleInFront){
-    server.write('o');
-  }
+// Spin buggy to the right
+void spinRight(){
+  pinMode( LM1, LOW);
+  pinMode( LM2, HIGH);
+  pinMode( RM1, HIGH);
+  pinMode( RM2, LOW);
 }
 
-
-// Send distance between buggy and object to processing
-void reportDistance(double dist){
-  if ( count > 200 ) { // Send distance once every 200 iterations
-  WiFiClient client2 = server2.available(); // Waiting for a client to connect
- 
-  int d; // Convert distance from double to int
-  d = (int) Input;
-  char j; // Convert distance from int to char
-  j = (char) dist;
-  
-  server2.write(j); // Send distance to processing
-  count = 0;
-  }
-  count++;
-}  
+// Spin buggy to the left
+void spinLeft(){
+  pinMode( LM1, HIGH);
+  pinMode( LM2, LOW);
+  pinMode( RM1, LOW);
+  pinMode( RM2, HIGH);
+}
