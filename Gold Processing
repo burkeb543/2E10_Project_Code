@@ -181,7 +181,7 @@ public void Stop() {
   }
 }
 
-// Stop button functionality description
+// Manual button functionality description
 public void Manual() {
   if (myClient.active()){
     myClient.write("m");
@@ -189,7 +189,7 @@ public void Manual() {
   }
 }
 
-// Stop button functionality description
+// Automatic button functionality description
 public void Automatic() {
   if (myClient.active()){
     myClient.write("g");
